@@ -7,13 +7,32 @@ class UserBase(BaseModel):
     email: EmailStr
 
 class UserCreate(UserBase):
-    password: str  # Password should be hashed before storing
+    sql_experience: str
+    programming_experience: str
+    learning_commitment: str
+    email: Optional[EmailStr] = None
 
 class UserResponse(UserBase):
     id: int
 
     class Config:
         from_attributes = True  # Ensures SQLAlchemy models work with Pydantic
+
+# Curriculum response schema
+class CurriculumResponse(BaseModel):
+    user_id: int
+    curriculum: List[str]
+
+# Update email schema
+class UpdateEmailRequest(BaseModel):
+    user_id: int
+    email: EmailStr
+    password: str
+
+# Login schema
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
 
 # Lesson Schemas
 class LessonBase(BaseModel):

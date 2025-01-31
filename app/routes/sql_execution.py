@@ -1,11 +1,7 @@
 from fastapi import APIRouter
-from pydantic import BaseModel
+from app.schemas import SQLQuery
 
 router = APIRouter()
-
-# Define Pydantic schema for request validation
-class SQLQuery(BaseModel):
-    query: str
 
 @router.post("/run/")
 def run_query(sql_query: SQLQuery):
