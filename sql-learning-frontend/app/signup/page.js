@@ -20,7 +20,7 @@ export default function Signup() {
       
       console.log("Sending signup request:", payload);  // ✅ Debugging log
       
-      await axios.post("http://127.0.0.1:8000/users/update_email/", payload);
+      await axios.post("http://127.0.0.1:8000/users/signup/", payload);
   
       // ✅ Store email in localStorage to mark user as logged in
       localStorage.setItem("userEmail", email);
@@ -45,7 +45,8 @@ export default function Signup() {
       <input 
         type="password" 
         placeholder="Create a password" 
-        onChange={(e) => setPassword(e.target.value)} 
+        onChange={(e) => setPassword(e.target.value)}
+        onKeyDown={(event) => event.key === "Enter" && handleSignup()}
         className="w-full p-3 border rounded-lg mt-4"
       />
 

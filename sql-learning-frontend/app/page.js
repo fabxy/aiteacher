@@ -40,7 +40,7 @@ export default function Home() {
     console.log("Sending data:", formData); // ✅ Log the request body
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/users/generate_curriculum/", formattedData);
+      const response = await axios.post("http://127.0.0.1:8000/curriculum/generate/", formattedData);
       console.log("Response received:", response.data);
       const userId = response.data.user_id;
       localStorage.setItem("userId", userId);
@@ -55,15 +55,15 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center bg-gray-50">
 
-    {/* Login Button (For returning users) */}
-    <button
+      {/* Login Button (For returning users) */}
+      <button
         onClick={() => router.push("/login")}
-        className="absolute top-4 right-4 px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700"
+        className="absolute top-4 right-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 mt-4"
       >
         Log In
       </button>
       
-      <h1 className="text-5xl font-bold text-blue-600">Learn SQL with Squirrel Steven</h1>
+      <h1 className="text-5xl font-bold text-blue-500">Learn SQL with Squirrel Steven</h1>
       <p className="mt-4 text-lg text-gray-700">A personalized, AI-powered learning experience tailored just for you.</p>
 
       <Image src="/squirrel_sql_teacher_brown.jpg" alt="Squirrel Steven" width={300} height={300} className="mt-6 rounded-lg shadow-lg" />
@@ -73,7 +73,7 @@ export default function Home() {
 
         <input type="text" name="sqlExperience" placeholder="Describe your SQL experience" onChange={handleChange} className="w-full p-3 border rounded-lg mt-3" />
         <input type="text" name="programmingExperience" placeholder="Describe your programming experience" onChange={handleChange} className="w-full p-3 border rounded-lg mt-3" />
-        <input type="text" name="learningCommitment" placeholder="Time commitment per week (e.g., 5 hours)" onChange={handleChange} className="w-full p-3 border rounded-lg mt-3" />
+        <input type="text" name="learningCommitment" placeholder="Time commitment per week (e.g., 5 hours)" onChange={handleChange} onKeyDown={(event) => event.key === "Enter" && handleGenerate()} className="w-full p-3 border rounded-lg mt-3" />
 
         <motion.button 
           onClick={handleGenerate} 

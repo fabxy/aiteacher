@@ -45,6 +45,7 @@ export default function Login() {
         type="password"
         placeholder="Enter your password"
         onChange={(e) => setPassword(e.target.value)}
+        onKeyDown={(event) => event.key === "Enter" && handleLogin()}
         className="w-full p-3 border rounded-lg mt-4"
       />
 

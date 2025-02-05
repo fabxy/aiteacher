@@ -16,7 +16,7 @@ export default function Dashboard() {
       const storedUserEmail = localStorage.getItem("userEmail");
 
       if (!storedUserId && !storedUserEmail) {
-        router.push("/");  // ✅ Redirect to home page if no user data
+        router.push("/"); // ✅ Redirect to home page if no user data
         return;
       }
 
@@ -26,9 +26,15 @@ export default function Dashboard() {
       if (storedUserId) {
         async function fetchCurriculum() {
           try {
-            const response = await axios.get(`http://127.0.0.1:8000/users/curriculum/${storedUserId}`);
-            const lessons = JSON.parse(response.data.lessons);
+            const response = await axios.get(`http://127.0.0.1:8000/curriculum/${storedUserId}`);
+            const lessons = response.data.lessons;
             setCurriculum(lessons);
+
+            // Calculate progress
+            const completedLessons = lessons.filter(lesson => lesson.completed).length;
+            const progressPercentage = lessons.length > 0 ? (completedLessons / lessons.length) * 100 : 0;
+            setProgress(progressPercentage);
+
           } catch (error) {
             console.error("Error fetching curriculum:", error);
           }
@@ -41,48 +47,63 @@ export default function Dashboard() {
   const handleLogout = () => {
     localStorage.removeItem("userId");
     localStorage.removeItem("userEmail");
-    router.push("/");  // ✅ Redirect to home after logout
+    router.push("/"); // ✅ Redirect to home after logout
+  };
+
+  const handleLessonClick = (lessonId) => {
+    router.push(`/lessons?lesson_id=${lessonId}`);
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold">Your SQL Learning Plan</h1>
-
-      {/* If the user is signed up, show email and logout button */}
-      {userEmail ? (
-        <div className="mt-4">
-          <p className="text-gray-700">Logged in as: <strong>{userEmail}</strong></p>
-          <button
-            onClick={handleLogout}
-            className="mt-4 px-6 py-3 bg-red-600 text-white rounded-lg text-lg shadow-md hover:bg-red-700"
-          >
-            Log Out
-          </button>
-        </div>
-      ) : (
-        // If user is not signed up, show a "Sign Up to Save Progress" button
-        userId && (
-          <button
-            onClick={() => router.push(`/signup?user_id=${userId}`)}
-            className="mt-4 px-6 py-3 bg-green-600 text-white rounded-lg text-lg shadow-md hover:bg-green-700 w-full"
-          >
-            Sign Up to Save Progress
-          </button>
-        )
-      )}
-
-      {/* Progress Bar */}
-      <div className="relative w-full bg-gray-200 rounded-full h-4 mt-6">
-        <div className="bg-blue-600 h-4 rounded-full" style={{ width: `${progress}%` }}></div>
+    <div className="min-h-screen bg-gray-50">
+      
+      {/* Signup Button in Top Right Corner */}
+      <div className="absolute top-6 right-6">
+        {!userEmail && (<button
+          onClick={() => router.push(`/signup?user_id=${userId}`)}
+          className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700"
+        >
+          Sign Up
+        </button>
+        )}
+        {userEmail && (<button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700"
+        >
+          Log Out
+        </button>
+        )}
       </div>
-      <p className="text-gray-700 text-sm mt-2">{progress}% completed</p>
+      
+      {/* Main Content */}
+      <div className="p-6 max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold">Your SQL Learning Plan</h1>
 
-      {/* Lessons List */}
-      <ul className="mt-6 space-y-2">
-        {curriculum.map((lesson, index) => (
-          <li key={index} className="p-3 bg-gray-100 rounded-lg shadow">{lesson}</li>
-        ))}
-      </ul>
+        {userEmail && (
+          <div className="mt-4">
+            <p className="text-gray-700">Logged in as: <strong>{userEmail}</strong></p>
+          </div>
+        )}
+
+        {/* Progress Bar */}
+        <div className="relative w-full bg-gray-200 rounded-full h-4 mt-6">
+          <div className="bg-blue-600 h-4 rounded-full" style={{ width: `${progress}%` }}></div>
+        </div>
+        <p className="text-gray-700 text-sm mt-2">{Math.round(progress)}% completed</p>
+
+        {/* Lessons List */}
+        <ul className="mt-6 space-y-2">
+          {curriculum.map((lesson, index) => (
+            <li
+              key={index}
+              onClick={() => handleLessonClick(lesson.id)}
+              className={`p-3 bg-gray-100 rounded-lg shadow cursor-pointer hover:bg-gray-200 ${lesson.completed ? 'line-through text-gray-500' : ''}`}
+            >
+              {lesson.id}. {lesson.title}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
