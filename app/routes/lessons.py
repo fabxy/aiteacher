@@ -3,18 +3,17 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.database import get_db
 from app.models import User, Lesson
+from app.schemas import LessonSchema
 from app.services.ai_service import generate_ai_lesson
 
 router = APIRouter()
 
-@router.get("/{lesson_id}")
+@router.get("/{lesson_id}", response_model=LessonSchema)
 def get_lesson(lesson_id: int, db: Session = Depends(get_db)):
     """
     Retrieve lesson details by lesson_id.
     If the lesson content is missing, generate it using the AI service.
     """
-
-    print("lesson_id", lesson_id)
 
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
@@ -31,41 +30,36 @@ def get_lesson(lesson_id: int, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(lesson)
     
-    return {
-        "id": lesson.id,
-        "title": lesson.title,
-        "content": lesson.content,
-        "completed": lesson.completed
-    }
+    return lesson
 
-# @router.post("/lessons/{lesson_id}/run_query")
-# def run_query(lesson_id: int, payload: dict, db: Session = Depends(get_db)):
-#     """
-#     Execute a user-provided SQL query and return the results.
-#     Only SELECT queries are allowed for safety.
-#     """
-#     # Verify the lesson exists.
-#     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
-#     if not lesson:
-#         raise HTTPException(status_code=404, detail="Lesson not found")
+@router.post("/{lesson_id}/run_query")
+def run_query(lesson_id: int, payload: dict, db: Session = Depends(get_db)):
+    """
+    Execute a user-provided SQL query and return the results.
+    Only SELECT queries are allowed for safety.
+    """
+    # Verify the lesson exists.
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
     
-#     query = payload.get("query")
-#     if not query:
-#         raise HTTPException(status_code=400, detail="No query provided")
+    query = payload.get("query")
+    if not query:
+        raise HTTPException(status_code=400, detail="No query provided")
     
-#     try:
-#         # For security, allow only SELECT queries.
-#         if not query.strip().lower().startswith("select"):
-#             raise HTTPException(status_code=400, detail="Only SELECT queries are allowed")
+    try:
+        # For security, allow only SELECT queries.
+        if not query.strip().lower().startswith("select"):
+            raise HTTPException(status_code=400, detail="Only SELECT queries are allowed")
         
-#         # Execute the query using SQLAlchemy's text module.
-#         result = db.execute(text(query))
-#         rows = result.fetchall()
-#         columns = result.keys()
-#         data = [dict(zip(columns, row)) for row in rows]
-#         return {"data": data}
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail=f"Error executing query: {str(e)}")
+        # Execute the query using SQLAlchemy's text module.
+        result = db.execute(text(query))
+        rows = result.fetchall()
+        columns = result.keys()
+        data = [dict(zip(columns, row)) for row in rows]
+        return {"data": data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error executing query: {str(e)}")
 
 @router.put("/{lesson_id}/complete")
 def mark_lesson_complete(lesson_id: int, db: Session = Depends(get_db)):
@@ -80,12 +74,4 @@ def mark_lesson_complete(lesson_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(lesson)
     
-    return {
-        "message": "Lesson marked as complete",
-        "lesson": {
-            "id": lesson.id,
-            "title": lesson.title,
-            "content": lesson.content,
-            "completed": lesson.completed
-        }
-    }
+    return None

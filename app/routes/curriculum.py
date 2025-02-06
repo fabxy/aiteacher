@@ -2,22 +2,22 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Curriculum, Lesson
-from app.schemas import CurriculumCreate, CurriculumCreateResponse, CurriculumResponse, LessonSchema
+from app.schemas import CurriculumCreateRequest, CurriculumCreateResponse, CurriculumResponse, LessonSchema
 from app.services.ai_service import generate_ai_curriculum
 import json
 
 router = APIRouter()
 
-@router.post("/generate/")
-async def generate_curriculum(preferences: CurriculumCreate, db: Session = Depends(get_db)):
+@router.post("/generate/", response_model=CurriculumCreateResponse)
+async def generate_curriculum(request: CurriculumCreateRequest, db: Session = Depends(get_db)):
     
     # Create a new user
     new_user = User(
         email=None,  # Email is set later during sign-up
         password_hash=None,  # No password yet
-        sql_experience=preferences.sql_experience,
-        programming_experience=preferences.programming_experience,
-        learning_commitment=preferences.learning_commitment
+        sql_experience=request.sql_experience,
+        programming_experience=request.programming_experience,
+        learning_commitment=request.learning_commitment
     )
     db.add(new_user)
     db.commit()
@@ -74,5 +74,5 @@ async def get_user_curriculum(user_id: int, db: Session = Depends(get_db)):
     return CurriculumResponse(
         user_id=user_id,
         curriculum_id=curriculum.id,
-        lessons=[LessonSchema(id=lesson.id, title=lesson.title, content=lesson.content, completed=lesson.completed) for lesson in lessons]
+        lessons=lessons
     )

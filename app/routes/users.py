@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
-from app.schemas import SignupRequest, LoginRequest
+from app.schemas import SignupRequest, LoginRequest, LoginResponse
 from passlib.context import CryptContext
 
 router = APIRouter()
@@ -24,10 +24,10 @@ def update_email(request: SignupRequest, db: Session = Depends(get_db)):
     user.password_hash = hashed_password
     db.commit()
     
-    return {"message": "Email & password updated successfully"}
+    return None
 
 
-@router.post("/login/")
+@router.post("/login/", response_model=LoginResponse)
 def login(request: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == request.email).first()
     if not user:
@@ -36,4 +36,4 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not pwd_context.verify(request.password, user.password_hash):
         raise HTTPException(status_code=400, detail="Invalid email or password")
 
-    return {"user_id": user.id, "message": "Login successful"}
+    return LoginResponse(user_id=user.id)
