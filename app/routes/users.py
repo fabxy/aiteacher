@@ -5,6 +5,9 @@ from app.database import get_db
 from app.models import User
 from app.schemas import SignupRequest, LoginRequest, LoginResponse
 from passlib.context import CryptContext
+import bcrypt
+if not hasattr(bcrypt, '__about__'):
+    bcrypt.__about__ = type('about', (object,), {'__version__': bcrypt.__version__})
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

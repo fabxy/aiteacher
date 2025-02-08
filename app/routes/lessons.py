@@ -36,22 +36,26 @@ def get_lesson(lesson_id: int, db: Session = Depends(get_db),
 
         # Create lesson schema in sandbox 
         # TODO: change super user name
-        super_db.execute(text(f"CREATE SCHEMA lesson_{lesson_id} AUTHORIZATION waschkowskif;"))
-        super_db.execute(text(f"GRANT USAGE, CREATE ON SCHEMA lesson_{lesson_id} TO llm_user;"))
-        super_db.execute(text(f"GRANT INSERT, SELECT ON ALL TABLES IN SCHEMA lesson_{lesson_id} TO llm_user;"))
-        super_db.commit()
+        super_session = next(super_db)
+        
+        # NOTE: Only works when React Strict mode is disabled
+        super_session.execute(text(f"CREATE SCHEMA lesson_{lesson_id} AUTHORIZATION waschkowskif;"))
+        super_session.execute(text(f"GRANT USAGE, CREATE ON SCHEMA lesson_{lesson_id} TO llm_user;"))
+        super_session.execute(text(f"GRANT INSERT, SELECT ON ALL TABLES IN SCHEMA lesson_{lesson_id} TO llm_user;"))
+        super_session.commit()
 
         # Create exercise table in sandbox
-        llm_db.execute(text(f"SET search_path TO lesson_{lesson_id};"))
-        llm_db.execute("""
+        llm_session = next(llm_db)
+        llm_session.execute(text(f"SET search_path TO lesson_{lesson_id};"))
+        llm_session.execute(text("""
             CREATE TABLE IF NOT EXISTS employees (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(100),
                 department VARCHAR(50),
                 salary INTEGER
             );
-            """)
-        llm_db.execute("""
+            """))
+        llm_session.execute(text("""
             INSERT INTO employees (name, department, salary) 
             SELECT * FROM (VALUES
                 ('Alice Johnson', 'Engineering', 75000),
@@ -60,34 +64,48 @@ def get_lesson(lesson_id: int, db: Session = Depends(get_db),
                 ('Dana White', 'Finance', 80000)
             ) AS tmp(name, department, salary)
             WHERE NOT EXISTS (SELECT 1 FROM employees);
-            """)
-        llm_db.commit()
+            """))
+        llm_session.commit()
 
         # Allow sandbox user to access exercise table
-        super_db.execute(text(f"GRANT USAGE, SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA lesson_{lesson_id} TO sandbox_user;"))
-        super_db.commit()
+        super_session.execute(text(f"GRANT USAGE ON SCHEMA lesson_{lesson_id} TO sandbox_user;"))
+        super_session.execute(text(f"GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA lesson_{lesson_id} TO sandbox_user;"))
+        super_session.execute(text(f"GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA lesson_{lesson_id} TO sandbox_user;"))
+
+        super_session.commit()
     
     return lesson
 
 @router.post("/{lesson_id}/run_query")
-def run_query(lesson_id: int, payload: dict, db: Session = Depends(lambda: get_db("sandbox"))):
+def run_query(lesson_id: int, payload: dict, sandbox_db: Session = Depends(lambda: get_db("sandbox"))):
     """
     Execute a user-provided SQL query in a dedicated schema for each lesson.
     """
 
     query = payload.get("query")
+    print(query)
     if not query:
         raise HTTPException(status_code=400, detail="No query provided")
     
     try:
         # Set the schema for execution
-        db.execute(text(f"SET search_path TO lesson_{lesson_id};"))
+        sandbox_session = next(sandbox_db)
+        sandbox_session.execute(text(f"SET search_path TO lesson_{lesson_id};"))
+
+        # Detect if it's an INSERT, UPDATE, or DELETE query
+        query_type = query.strip().split()[0].upper()
 
         # Execute the query
-        result = db.execute(text(query))
-        rows = result.fetchall()
-        columns = result.keys()
-        data = [dict(zip(columns, row)) for row in rows]
+        result = sandbox_session.execute(text(query))
+
+        if query_type == "SELECT":
+            rows = result.fetchall()
+            columns = result.keys()
+            data = [dict(zip(columns, row)) for row in rows]
+        else:
+            sandbox_session.commit()
+            data = "Query executed successfully"
+        
         return {"data": data}
 
     except Exception as e:
