@@ -19,3 +19,36 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.prose h1 {
+  @apply text-3xl font-bold mt-6;
+}
+
+.prose h2 {
+  @apply text-2xl font-semibold mt-4;
+}
+
+.prose h3 {
+  @apply text-xl font-semibold mt-2;
+}
+
+.prose p {
+  @apply mb-2 mt-2;
+}
+
+.prose ul {
+  @apply list-disc ml-8;
+}
+
+.prose ul li {
+  margin-bottom: 0.25rem;
+}
+
+.prose ol {
+  @apply list-decimal ml-8;
+}
+
+.prose ol li {
+  margin-bottom: 0.25rem;
+}
+

@@ -9,6 +9,7 @@ class User(Base):
     password_hash = Column(String, nullable=True)
     sql_experience = Column(Text)
     programming_experience = Column(Text)
+    learning_goals = Column(Text)
     learning_commitment = Column(Text)
 
     curriculum = relationship("Curriculum", back_populates="user")

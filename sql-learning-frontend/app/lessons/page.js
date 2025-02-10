@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 
 
 export default function LessonPage() {
@@ -89,8 +90,8 @@ export default function LessonPage() {
 
       {/* Lesson Content */}
       <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow">
-        <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
-        <ReactMarkdown className="prose" remarkPlugins={[remarkGfm]}>
+        {/* <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1> */}
+        <ReactMarkdown className="prose prose-lg max-w-none" remarkPlugins={[remarkGfm, remarkBreaks]}>
           {lesson.content || "This lesson has no content yet."}
         </ReactMarkdown>
 

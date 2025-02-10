@@ -9,21 +9,40 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 def generate_ai_lesson(user: User, lesson: Lesson):
+
+    lesson_title = lesson.title.split("(")[0]
+    lesson_duration = lesson.title.split("(")[1].split(")")[0]
+
     prompt = f"""
-    Create a personalized SQL lesson on the topic:
-    - {lesson.title} 
-    
-    for a user with the following profile:
-    - SQL Experience: {user.sql_experience}
-    - Programming Experience: {user.programming_experience}
-    - Learning Commitment: {user.learning_commitment}
+    Generate a structured SQL lesson on the topic {lesson_title} for a user with the following profile:    
+    - SQL experience: {user.sql_experience}
+    - Programming experience: {user.programming_experience}
+    - Learning goals: {user.learning_goals}
 
-    The lesson should include: 
-    - A brief introduction to the topic
-    - Multiple sections explaining theory and concepts with examples
-    - One exercise to which the user is promted to code the answer.
+    The lesson should take {lesson_duration} to complete and has to include: 
+    - A brief introduction to the topic:
+        - Explain the importance of the topic
+        - Include use cases and applications
+    - Multiple sections explaining theory and concepts of the topic:
+        - Provide clear and structured explanations based on the users SQL experience
+        - Relate concepts to the user's programming experience
+        - Include multiple SQL examples illustrating the topic
+        - Use sample datasets if needed
+    - One practical exercise based on the lesson topic:
+        - Define the problem statement clearly
+        - Ask the user to write SQL code to solve the problem
+        - Include sample input data and expected output
 
-    Respond in markdown format.
+    Respond in markdown format. Here is an example of the expected format:
+    # [Lesson title]
+    ## Introduction
+    ## [Section 1 title]
+    ### [Subsection 1 title]
+    ...
+    ### [Subsection N title]
+    ...
+    ## [Section N title]
+    ## Exercise
     """
     
     client = openai.OpenAI(api_key=OPENAI_API_KEY)  # ✅ New OpenAI API format
@@ -38,12 +57,16 @@ def generate_ai_lesson(user: User, lesson: Lesson):
 def generate_ai_curriculum(user: User):
     prompt = f"""
     Create a personalized SQL learning curriculum for a user with the following profile:
-    - SQL Experience: {user.sql_experience}
-    - Programming Experience: {user.programming_experience}
-    - Learning Commitment: {user.learning_commitment}
+    - SQL experience: {user.sql_experience}
+    - Programming experience: {user.programming_experience}
+    - Learning goals: {user.learning_goals}
+    - Time commitment: {user.learning_commitment}
 
-    Provide a JSON list of lesson titles like:
-    ["Introduction to SQL", "Filtering Data with WHERE", "Joining Tables with JOIN"]
+    Write a list of lesson titles that allow the user to achieve their learning goals based on their SQL and programming experience.
+    Specify the duration of each lesson, so that the overall duration adds up to the user's time commitment.
+
+    Return a JSON list of lesson titles with the lesson duration in brackets, e.g.:
+    ["Introduction to SQL (15 minutes)", "Filtering Data with WHERE (25 minutes)", "Joining Tables with JOIN (30 minutes)"]
     """
     
     client = openai.OpenAI(api_key=OPENAI_API_KEY)  # ✅ New OpenAI API format

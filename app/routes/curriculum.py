@@ -17,6 +17,7 @@ async def generate_curriculum(request: CurriculumCreateRequest, db: Session = De
         password_hash=None,  # No password yet
         sql_experience=request.sql_experience,
         programming_experience=request.programming_experience,
+        learning_goals=request.learning_goals,
         learning_commitment=request.learning_commitment
     )
     db.add(new_user)

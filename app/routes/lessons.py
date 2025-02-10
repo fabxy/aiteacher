@@ -73,6 +73,8 @@ def get_lesson(lesson_id: int, db: Session = Depends(get_db),
         super_session.execute(text(f"GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA lesson_{lesson_id} TO sandbox_user;"))
 
         super_session.commit()
+
+    print(lesson.content)
     
     return lesson
 
@@ -83,7 +85,7 @@ def run_query(lesson_id: int, payload: dict, sandbox_db: Session = Depends(lambd
     """
 
     query = payload.get("query")
-    print(query)
+
     if not query:
         raise HTTPException(status_code=400, detail="No query provided")
     

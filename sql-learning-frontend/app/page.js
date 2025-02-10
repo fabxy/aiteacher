@@ -10,6 +10,7 @@ export default function Home() {
   const [formData, setFormData] = useState({
     sqlExperience: "",
     programmingExperience: "",
+    learningGoals: "",
     learningCommitment: "",
   });
 
@@ -32,9 +33,10 @@ export default function Home() {
     setLoading(true);
 
     const formattedData = {
-      sql_experience: formData.sqlExperience || "No experience provided",
-      programming_experience: formData.programmingExperience || "No experience provided",
-      learning_commitment: formData.learningCommitment || "No commitment specified",
+      sql_experience: formData.sqlExperience || "No SQL experience provided",
+      programming_experience: formData.programmingExperience || "No programming experience provided",
+      learning_goals: formData.learningGoals || "No learning goals specified",
+      learning_commitment: formData.learningCommitment || "No time commitment specified",
     };
 
     console.log("Sending data:", formData); // ✅ Log the request body
@@ -73,7 +75,8 @@ export default function Home() {
 
         <input type="text" name="sqlExperience" placeholder="Describe your SQL experience" onChange={handleChange} className="w-full p-3 border rounded-lg mt-3" />
         <input type="text" name="programmingExperience" placeholder="Describe your programming experience" onChange={handleChange} className="w-full p-3 border rounded-lg mt-3" />
-        <input type="text" name="learningCommitment" placeholder="Time commitment per week (e.g., 5 hours)" onChange={handleChange} onKeyDown={(event) => event.key === "Enter" && handleGenerate()} className="w-full p-3 border rounded-lg mt-3" />
+        <input type="text" name="learningGoals" placeholder="What are your learning goals?" onChange={handleChange} className="w-full p-3 border rounded-lg mt-3" />
+        <input type="text" name="learningCommitment" placeholder="What is your time commitment?" onChange={handleChange} onKeyDown={(event) => event.key === "Enter" && handleGenerate()} className="w-full p-3 border rounded-lg mt-3" />
 
         <motion.button 
           onClick={handleGenerate} 
