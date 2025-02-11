@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import AuthModal from "@/components/AuthModal";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -59,13 +60,7 @@ export default function Dashboard() {
       
       {/* Signup Button in Top Right Corner */}
       <div className="absolute top-6 right-6">
-        {!userEmail && (<button
-          onClick={() => router.push(`/signup?user_id=${userId}`)}
-          className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700"
-        >
-          Sign Up
-        </button>
-        )}
+        {!userEmail && <AuthModal initialMode="signup" />}
         {userEmail && (<button
           onClick={handleLogout}
           className="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700"
@@ -99,7 +94,7 @@ export default function Dashboard() {
               onClick={() => handleLessonClick(lesson.id)}
               className={`p-3 bg-gray-100 rounded-lg shadow cursor-pointer hover:bg-gray-200 ${lesson.completed ? 'line-through text-gray-500' : ''}`}
             >
-              {lesson.id}. {lesson.title}
+              {index+1}. {lesson.title}
             </li>
           ))}
         </ul>

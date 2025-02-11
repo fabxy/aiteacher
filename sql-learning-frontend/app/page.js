@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import axios from "axios";
 import Image from "next/image";
+import AuthModal from "@/components/AuthModal";
 
 export default function Home() {
   const router = useRouter();
@@ -58,14 +59,18 @@ export default function Home() {
     <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center bg-gray-50">
 
       {/* Login Button (For returning users) */}
-      <button
+      {/* <button
         onClick={() => router.push("/login")}
         className="absolute top-4 right-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 mt-4"
       >
         Log In
-      </button>
+      </button> */}
+
+      <div className="absolute top-4 right-4">
+        <AuthModal initialMode="login" />
+      </div>
       
-      <h1 className="text-5xl font-bold text-blue-500">Learn SQL with Squirrel Steven</h1>
+      <h1 className="mt-4 text-5xl font-bold text-blue-500">Learn SQL with Squirrel Steven</h1>
       <p className="mt-4 text-lg text-gray-700">A personalized, AI-powered learning experience tailored just for you.</p>
 
       <Image src="/squirrel_sql_teacher_brown.jpg" alt="Squirrel Steven" width={300} height={300} className="mt-6 rounded-lg shadow-lg" />
