@@ -4,7 +4,8 @@ from sqlalchemy import text
 from app.database import get_db
 from app.models import User, Lesson
 from app.schemas import LessonSchema
-from app.services.ai_service import generate_ai_lesson
+from app.services.ai_service import generate_ai_lesson, generate_ai_data
+import json
 
 router = APIRouter()
 
@@ -21,61 +22,67 @@ def get_lesson(lesson_id: int, db: Session = Depends(get_db),
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
     
+    completed_lessons = db.query(Lesson).filter(Lesson.user_id == lesson.user_id, Lesson.completed == True).all()
+    
     user = db.query(User).filter(User.id == lesson.user_id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User with lesson ID {lesson.id} not found")
+        raise HTTPException(status_code=404, detail=f"User with lesson ID {lesson.id} not found")
     
-    # Check if lesson was generated already
+    # Generate lesson content
     if not lesson.content:
-
-        # Generate lesson content
-        lesson.content = generate_ai_lesson(user, lesson)
-        db.add(lesson)
-        db.commit()
-        db.refresh(lesson)
-
-        # Create lesson schema in sandbox 
-        # TODO: change super user name
-        super_session = next(super_db)
+        try:
+            lesson.content = generate_ai_lesson(user, lesson, completed_lessons)
+            db.add(lesson)
+            db.commit()
+            db.refresh(lesson)
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=500, detail=f"Error generating lesson content: {str(e)}")
         
-        # NOTE: Only works when React Strict mode is disabled
-        super_session.execute(text(f"CREATE SCHEMA lesson_{lesson_id} AUTHORIZATION waschkowskif;"))
-        super_session.execute(text(f"GRANT USAGE, CREATE ON SCHEMA lesson_{lesson_id} TO llm_user;"))
-        super_session.execute(text(f"GRANT INSERT, SELECT ON ALL TABLES IN SCHEMA lesson_{lesson_id} TO llm_user;"))
-        super_session.commit()
+    # Create lesson schema in sandbox
+    super_session = next(super_db)
+    schema_exists = super_session.execute(text(f"SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'lesson_{lesson_id}';")).fetchone()
 
-        # Create exercise table in sandbox
-        llm_session = next(llm_db)
-        llm_session.execute(text(f"SET search_path TO lesson_{lesson_id};"))
-        llm_session.execute(text("""
-            CREATE TABLE IF NOT EXISTS employees (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(100),
-                department VARCHAR(50),
-                salary INTEGER
-            );
-            """))
-        llm_session.execute(text("""
-            INSERT INTO employees (name, department, salary) 
-            SELECT * FROM (VALUES
-                ('Alice Johnson', 'Engineering', 75000),
-                ('Bob Smith', 'Marketing', 60000),
-                ('Charlie Brown', 'HR', 50000),
-                ('Dana White', 'Finance', 80000)
-            ) AS tmp(name, department, salary)
-            WHERE NOT EXISTS (SELECT 1 FROM employees);
-            """))
-        llm_session.commit()
+    if not schema_exists:
+        try:
+            super_session.execute(text(f"CREATE SCHEMA lesson_{lesson_id} AUTHORIZATION waschkowskif;"))
+            super_session.execute(text(f"GRANT USAGE, CREATE ON SCHEMA lesson_{lesson_id} TO llm_user;"))
+            super_session.execute(text(f"GRANT INSERT, SELECT ON ALL TABLES IN SCHEMA lesson_{lesson_id} TO llm_user;"))
+            super_session.commit()
+        except Exception as e:
+            super_session.rollback()
+            raise HTTPException(status_code=500, detail=f"Error creating schema: {str(e)}")
 
-        # Allow sandbox user to access exercise table
+    # Create exercise table in sandbox
+    llm_session = next(llm_db)
+    llm_session.execute(text(f"SET search_path TO lesson_{lesson_id};"))
+    table_exists = llm_session.execute(text(f"SELECT table_name FROM information_schema.tables WHERE table_schema = 'lesson_{lesson_id}';")).fetchone()
+    
+    if not table_exists:
+        try:
+            response = generate_ai_data(lesson)
+            queries = json.loads(response).get("queries", [])
+
+            if not queries:
+                raise HTTPException(status_code=500, detail="No queries generated for sample data.")
+            
+            for query in queries:
+                llm_session.execute(text(query))
+            llm_session.commit()
+        except Exception as e:
+            llm_session.rollback()
+            raise HTTPException(status_code=500, detail=f"Error generating sample data: {str(e)}")
+
+    # Allow sandbox user to access exercise table
+    try:
         super_session.execute(text(f"GRANT USAGE ON SCHEMA lesson_{lesson_id} TO sandbox_user;"))
         super_session.execute(text(f"GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA lesson_{lesson_id} TO sandbox_user;"))
         super_session.execute(text(f"GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA lesson_{lesson_id} TO sandbox_user;"))
-
         super_session.commit()
-
-    print(lesson.content)
-    
+    except Exception as e:
+        super_session.rollback()
+        raise HTTPException(status_code=500, detail=f"Error granting access to sandbox_user: {str(e)}")
+     
     return lesson
 
 @router.post("/{lesson_id}/run_query")

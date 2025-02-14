@@ -28,7 +28,7 @@ export default function Dashboard() {
         async function fetchCurriculum() {
           try {
             const response = await axios.get(`http://127.0.0.1:8000/curriculum/${storedUserId}`);
-            const lessons = response.data.lessons;
+            const lessons = response.data.lessons.sort((a, b) => a.id - b.id);
             setCurriculum(lessons);
 
             // Calculate progress

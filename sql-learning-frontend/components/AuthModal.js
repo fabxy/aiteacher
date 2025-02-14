@@ -4,7 +4,7 @@ import axios from "axios";
 import * as Dialog from "@radix-ui/react-dialog";
 
 export default function AuthModal({ initialMode = "login" }) {
-  const isLogin = useState(initialMode === "login");
+  const [isLogin, setIsLogin] = useState(initialMode === "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

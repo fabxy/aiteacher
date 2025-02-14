@@ -90,17 +90,15 @@ export default function LessonPage() {
 
       {/* Lesson Content */}
       <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow">
-        {/* <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1> */}
         <ReactMarkdown className="prose prose-lg max-w-none" remarkPlugins={[remarkGfm, remarkBreaks]}>
           {lesson.content || "This lesson has no content yet."}
         </ReactMarkdown>
 
         {/* SQL Exercise Section (if applicable) */}
         <div className="mb-6">
-          <h2 className="text-2xl font-semibold mb-2">SQL Exercise</h2>
-          <p className="mb-2">
-            Try writing a SQL query to complete the exercise below:
-          </p>
+          {/* <p className="mb-2 font-semibold">
+            Click Run Query to test your code. Click Submit Query to submit your final answer.
+          </p> */}
           <form onSubmit={handleQuerySubmit}>
             <textarea
               value={sqlQuery}
